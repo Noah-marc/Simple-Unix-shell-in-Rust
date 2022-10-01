@@ -17,6 +17,8 @@ pub mod shell {
         let mut user_input = String::new();
         stdin().read_line(&mut user_input).unwrap();
 
+        let file_name = "";
+
         let reformated_input = user_input_reformat(user_input);
         create_file(&reformated_input);
 
@@ -57,21 +59,29 @@ pub mod shell {
                         Stdio::inherit()
                     };
 
-                    // this assigns a command along with all necessary arguments to the child process
-                    let execution = Command::new(command)
-                        .args(args)
-                        .stdin(stdin_child)
-                        .stdout(stdout_child)
-                        .spawn();
-                    match execution {
-                        Ok(output) => {
-                            to_execute= Some(output);
-                        },
-                        Err(e) => {
-                            to_execute = None;
-                            eprintln!("{}", e);
-                        },
-                    };
+                    if command == &">" {
+                        let exe = Command::new("tee")
+                            .args(file_name)
+                            .stdin(stdin_child)
+                            .spawn();
+                    } else {
+
+                        // this assigns a command along with all necessary arguments to the child process
+                        let execution = Command::new(command)
+                            .args(args)
+                            .stdin(stdin_child)
+                            .stdout(stdout_child)
+                            .spawn();
+                        match execution {
+                            Ok(output) => {
+                                to_execute = Some(output);
+                            },
+                            Err(e) => {
+                                to_execute = None;
+                                eprintln!("{}", e);
+                            },
+                        };
+                    }
 
                 }
             }
@@ -117,6 +127,7 @@ pub mod shell {
                     break;
                 }
             }
+            file_name = k[index+1];
 
             let new_path = Path::new(k[index + 1]);
             let mut file = File::create(new_path);
