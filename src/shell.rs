@@ -59,12 +59,6 @@ pub mod shell {
                         Stdio::inherit()
                     };
 
-                    if command == &">" {
-                        let exe = Command::new("tee")
-                            .args(file_name)
-                            .stdin(stdin_child)
-                            .spawn();
-                    } else {
 
                         // this assigns a command along with all necessary arguments to the child process
                         let execution = Command::new(command)
@@ -81,7 +75,6 @@ pub mod shell {
                                 eprintln!("{}", e);
                             },
                         };
-                    }
 
                 }
             }
@@ -127,7 +120,6 @@ pub mod shell {
                     break;
                 }
             }
-            file_name = k[index+1];
 
             let new_path = Path::new(k[index + 1]);
             let mut file = File::create(new_path);
