@@ -19,6 +19,7 @@ pub mod shell {
 
         let reformated_input = user_input_reformat(user_input);
 
+
         // this needs to be peekable in order to determine when we are on the last command
         let mut commands =  reformated_input.trim().split(" | ").peekable();
         let mut to_execute = None;
@@ -122,20 +123,21 @@ pub mod shell {
 
         return vector_str;
     }
-    pub fn create_file(input:String) {
+    pub fn create_file(input:&str) {
         let mut index = 0;
         let k:Vec<&str> = input.split(" ").collect();
 
-        for i in 0..k.len(){
-            if k[i].to_string() == ">" {
-                index = i;
-                break;
+        if k.contains(&">") {
+            for i in 0..k.len() {
+                if k[i].to_string() == ">" {
+                    index = i;
+                    break;
+                }
             }
+
+            let new_path = Path::new(&k[index + 1]);
+            let mut file = File::create(&new_path);
         }
-
-        let new_path = Path::new(&k[index+1]);
-        let mut file = File::create(&new_path);
-
     }
 
 }
