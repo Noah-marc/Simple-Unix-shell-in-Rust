@@ -5,7 +5,6 @@ pub mod shell {
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
     use std::fs::File;
-    // >
 
     pub fn shell_run() {
     loop {
@@ -39,8 +38,19 @@ pub mod shell {
                 },
                 "exit" => return,
                 ">" => {
+                    let stdin_child = to_execute
+                        .map_or(Stdio::inherit(),
+                                |output: Child| Stdio::from(output.stdout.unwrap()));
+
+                    let stdout_child = if commands.peek().is_some() {
+                        Stdio::piped()
+                    } else {
+                        Stdio::inherit()
+                    };
                     let execute = Command::new("touch")
                         .args(args)
+                        .stdin(stdin_child)
+                        .stdout(stdout_child)
                         .spawn();
                     match execute {
                         Ok(output) => { to_execute = Some(output); },
