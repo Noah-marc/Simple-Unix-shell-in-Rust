@@ -99,6 +99,7 @@ pub mod shell {
         for i in 0..vector.len(){
             if vector[i] == '>' {
                 vector.insert(i, '|');
+                break;
 
             }
         }
