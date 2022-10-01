@@ -20,7 +20,6 @@ pub mod shell {
         let file_name = "";
 
         let reformated_input = user_input_reformat(user_input);
-        create_file(&reformated_input);
 
 
         // this needs to be peekable in order to determine when we are on the last command
@@ -47,7 +46,7 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
-                ">" => {},
+                ">" => { create_file(&reformated_input); },
                 command => {
 
                     let stdin_child = to_execute
