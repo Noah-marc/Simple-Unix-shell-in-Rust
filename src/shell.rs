@@ -47,21 +47,6 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
-                ">" => {
-                    // let input = &to_execute
-                    //     .map_or(Stdio::inherit(), |out:Child| Stdio::from(out.stdout.unwrap()));
-                    let testing = Command::new(command)
-                        .args(args)
-                        .output()
-                        .expect("failed command");
-
-                    let content = String::from_utf8(testing.stdout).unwrap().to_string();
-                    //create_file(&reformated_input);
-                    let file_name = name_file(&reformated_input);
-                    let mut file = File::create(file_name).expect("File creation failed");
-                    //write!(file,"{}",content)?;
-                    file.write_all(content.as_bytes());
-                },
                 command => {
 
                     let stdin_child = to_execute
@@ -73,7 +58,22 @@ pub mod shell {
                         Stdio::inherit()
                     };
 
-
+                    if command == ">" {
+                        let execution1 = Command::new(command)
+                            .args(args)
+                            .stdin(stdin_child)
+                            .stdout(Stdio::null())
+                            .spawn();
+                        match execution1 {
+                            Ok(output) => {
+                                to_execute = Some(output);
+                            },
+                            Err(e) => {
+                                to_execute = None;
+                                eprintln!("{}", e);
+                            },
+                        };
+                    } else {
                         // this assigns a command along with all necessary arguments to the child process
                         let execution = Command::new(command)
                             .args(args)
@@ -89,7 +89,7 @@ pub mod shell {
                                 eprintln!("{}", e);
                             },
                         };
-
+                    }
                 }
             }
         }
