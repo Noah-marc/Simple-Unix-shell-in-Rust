@@ -4,7 +4,6 @@ pub mod shell {
     use std::io::{stdin, stdout, Write};
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
-    use std::fs::File;
 
     pub fn shell_run() {
     loop {
@@ -15,9 +14,12 @@ pub mod shell {
         let mut user_input = String::new();
         stdin().read_line(&mut user_input).unwrap();
 
+        let reformated_input = user_input_reformat(user_input);
+
         // this needs to be peekable in order to determine when we are on the last command
-        let mut commands = user_input.trim().split(" | ").peekable();
+        let mut commands =  reformated_input.trim().split(" | ").peekable();
         let mut to_execute = None;
+
 
         while let Some(command) = commands.next()  {
 
@@ -38,19 +40,8 @@ pub mod shell {
                 },
                 "exit" => return,
                 ">" => {
-                    let stdin_child = to_execute
-                        .map_or(Stdio::inherit(),
-                                |output: Child| Stdio::from(output.stdout.unwrap()));
-
-                    let stdout_child = if commands.peek().is_some() {
-                        Stdio::piped()
-                    } else {
-                        Stdio::inherit()
-                    };
                     let execute = Command::new("touch")
                         .args(args)
-                        .stdin(stdin_child)
-                        .stdout(stdout_child)
                         .spawn();
                     match execute {
                         Ok(output) => { to_execute = Some(output); },
@@ -95,6 +86,26 @@ pub mod shell {
         }
 
         }
+    }
+
+    pub fn user_input_reformat(input:String) -> String {
+
+        let mut vector:Vec<char> = Vec::new();
+
+        for x in 0..input.len() {
+            vector.push(input.chars().nth(x).unwrap());
+        }
+
+        for i in 0..vector.len(){
+            if vector[i] == '>' {
+                vector.insert(i, '|');
+
+            }
+        }
+
+        let vector_str:String = vector.into_iter().collect();
+
+        return vector_str;
     }
 
 }
