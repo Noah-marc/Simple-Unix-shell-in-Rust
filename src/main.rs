@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::shell::shell::shell_run;
 
 mod shell;

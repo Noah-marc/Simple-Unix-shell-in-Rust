@@ -1,9 +1,12 @@
 pub mod shell {
-
+    use std::borrow::Borrow;
     use std::env;
     use std::io::{stdin, stdout, Write};
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
+    use std::fs::File;
+    use std::ops::Deref;
+    use std::str;
 
     pub fn shell_run() {
     loop {
@@ -26,7 +29,8 @@ pub mod shell {
             // everything after the first whitespace character is interpreted as args to the command
             let mut parts = command.trim().split_whitespace();
             let command = parts.next().unwrap();
-            let args = parts;
+            let mut args = parts;
+
 
             match command {
                 "cd" => {
@@ -40,18 +44,25 @@ pub mod shell {
                 },
                 "exit" => return,
                 ">" => {
-                    let execute = Command::new("touch")
-                        .args(args)
-                        .spawn();
-                    match execute {
-                        Ok(output) => { to_execute = Some(output); },
-                        Err(e) => {
-                            to_execute = None;
-                            eprintln!("{}", e);
-                        },
-                    };
+
+
+                    // let dir = env::current_dir().unwrap().to_str().unwrap().to_string();
+                    // let new_path = Path::new(&dir);
+                    // let display = new_path.display();
+                    //
+                    // let mut file = match File::create(&new_path) {
+                    //     Err(why) => panic!("couldn't create: {}", why),
+                    //     Ok(file) => file,
+                    // };
+                    // match file.write_all(input) {
+                    //     Err(why) => panic!("couldn't write to {}: {}", display, why),
+                    //     Ok(_) => println!("successfully wrote to {}", display),
+                    // }
+
+
                 }
                 command => {
+
                     let stdin_child = to_execute
                         .map_or(Stdio::inherit(),
                                 |output: Child| Stdio::from(output.stdout.unwrap()));
@@ -68,14 +79,16 @@ pub mod shell {
                         .stdin(stdin_child)
                         .stdout(stdout_child)
                         .spawn();
-
                     match execution {
-                        Ok(output) => { to_execute = Some(output); },
+                        Ok(output) => {
+                            to_execute= Some(output);
+                        },
                         Err(e) => {
                             to_execute = None;
                             eprintln!("{}", e);
                         },
                     };
+
                 }
             }
         }
@@ -99,6 +112,7 @@ pub mod shell {
         for i in 0..vector.len(){
             if vector[i] == '>' {
                 vector.insert(i, '|');
+                vector.insert(i+1 as usize, ' ');
                 break;
 
             }
@@ -107,6 +121,21 @@ pub mod shell {
         let vector_str:String = vector.into_iter().collect();
 
         return vector_str;
+    }
+    pub fn create_file(input:String) {
+        let mut index = 0;
+        let k:Vec<&str> = input.split(" ").collect();
+
+        for i in 0..k.len(){
+            if k[i].to_string() == ">" {
+                index = i;
+                break;
+            }
+        }
+
+        let new_path = Path::new(&k[index+1]);
+        let mut file = File::create(&new_path);
+
     }
 
 }
