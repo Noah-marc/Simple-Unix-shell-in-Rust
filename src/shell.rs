@@ -127,17 +127,18 @@ pub mod shell {
         let mut index = 0;
         let k:Vec<&str> = input.split(" ").collect();
 
-        if k.contains(&">") {
+
             for i in 0..k.len() {
                 if k[i].to_string() == ">" {
                     index = i;
                     break;
                 }
             }
-
-            let new_path = Path::new(&k[index + 1]);
-            let mut file = File::create(&new_path);
+            if index != 0 {
+                let new_path = Path::new(&k[index + 1]);
+                let mut file = File::create(&new_path);
+            }
         }
-    }
+
 
 }
