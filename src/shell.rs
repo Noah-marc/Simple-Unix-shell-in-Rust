@@ -47,6 +47,7 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
+                ">" => {},
                 command => {
 
                     let stdin_child = to_execute
@@ -57,23 +58,6 @@ pub mod shell {
                     } else {
                         Stdio::inherit()
                     };
-
-                    if command == ">" {
-                        let execution1 = Command::new(command)
-                            .args(args)
-                            .stdin(stdin_child)
-                            .stdout(Stdio::null())
-                            .spawn();
-                        match execution1 {
-                            Ok(output) => {
-                                to_execute = Some(output);
-                            },
-                            Err(e) => {
-                                to_execute = None;
-                                eprintln!("{}", e);
-                            },
-                        };
-                    } else {
                         // this assigns a command along with all necessary arguments to the child process
                         let execution = Command::new(command)
                             .args(args)
@@ -89,7 +73,6 @@ pub mod shell {
                                 eprintln!("{}", e);
                             },
                         };
-                    }
                 }
             }
         }
