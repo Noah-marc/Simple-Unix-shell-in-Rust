@@ -18,6 +18,7 @@ pub mod shell {
         stdin().read_line(&mut user_input).unwrap();
 
         let reformated_input = user_input_reformat(user_input);
+        create_file(&reformated_input);
 
 
         // this needs to be peekable in order to determine when we are on the last command
@@ -125,19 +126,21 @@ pub mod shell {
     }
     pub fn create_file(input:&str) {
         let mut index = 0;
+        input.trim();
         let k:Vec<&str> = input.split(" ").collect();
 
-
+        if k.contains(&">") {
             for i in 0..k.len() {
                 if k[i].to_string() == ">" {
                     index = i;
                     break;
                 }
             }
-            if index != 0 {
-                let new_path = Path::new(&k[index + 1]);
-                let mut file = File::create(&new_path);
-            }
+
+            let new_path = Path::new(k[index + 1]);
+            let mut file = File::create(new_path);
+        }
+
         }
 
 
