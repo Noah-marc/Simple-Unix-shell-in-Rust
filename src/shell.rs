@@ -1,13 +1,13 @@
 pub mod shell {
-    use std::borrow::Borrow;
+    use std::borrow::{Borrow, BorrowMut};
     use std::env;
     use std::io::{stdin, stdout, Write};
+    use std::io::prelude::*;
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
     use std::fs::File;
     use std::ops::Deref;
     use std::str;
-
     pub fn shell_run() {
     loop {
         let current_path = env::current_dir().unwrap().to_str().unwrap().to_string();
@@ -47,11 +47,25 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
+                ">" => {
+                    // let input = &to_execute
+                    //     .map_or(Stdio::inherit(), |out:Child| Stdio::from(out.stdout.unwrap()));
+                    let testing = Command::new(command)
+                        .args(args)
+                        .output()
+                        .expect("failed command");
+
+                    let content = String::from_utf8(testing.stdout).unwrap().to_string();
+                    //create_file(&reformated_input);
+                    let file_name = name_file(&reformated_input);
+                    let mut file = File::create(file_name).expect("File creation failed");
+                    //write!(file,"{}",content)?;
+                    file.write_all(content.as_bytes());
+                },
                 command => {
 
                     let stdin_child = to_execute
-                        .map_or(Stdio::inherit(),
-                                |output: Child| Stdio::from(output.stdout.unwrap()));
+                        .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
 
                     let stdout_child = if commands.peek().is_some() {
                         Stdio::piped()
@@ -126,6 +140,24 @@ pub mod shell {
         }
 
         }
+
+    pub fn name_file(input:&str) -> String {
+
+        let mut index = 0;
+        let k:Vec<&str> = input.trim().split(" ").collect();
+
+        if k.contains(&">") {
+            for i in 0..k.len() {
+                if k[i].to_string() == ">" {
+                    index = i;
+                    break;
+                }
+            }
+        }
+
+        return k[index+1].to_string();
+
+    }
 
 
 }
