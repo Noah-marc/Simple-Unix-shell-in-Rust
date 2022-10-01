@@ -45,24 +45,6 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
-                ">" => {
-
-
-                    // let dir = env::current_dir().unwrap().to_str().unwrap().to_string();
-                    // let new_path = Path::new(&dir);
-                    // let display = new_path.display();
-                    //
-                    // let mut file = match File::create(&new_path) {
-                    //     Err(why) => panic!("couldn't create: {}", why),
-                    //     Ok(file) => file,
-                    // };
-                    // match file.write_all(input) {
-                    //     Err(why) => panic!("couldn't write to {}: {}", display, why),
-                    //     Ok(_) => println!("successfully wrote to {}", display),
-                    // }
-
-
-                }
                 command => {
 
                     let stdin_child = to_execute
