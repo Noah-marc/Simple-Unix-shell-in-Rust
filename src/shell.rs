@@ -1,12 +1,13 @@
 pub mod shell {
 
-    pub fn shell_run() {
-
     use std::env;
     use std::io::{stdin, stdout, Write};
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
+    use std::fs::File;
+    // >
 
+    pub fn shell_run() {
     loop {
         let current_path = env::current_dir().unwrap().to_str().unwrap().to_string();
         print!("{current_path}$", current_path = current_path);
@@ -37,6 +38,18 @@ pub mod shell {
                     to_execute = None;
                 },
                 "exit" => return,
+                ">" => {
+                    let execute = Command::new("touch")
+                        .args(args)
+                        .spawn();
+                    match execute {
+                        Ok(output) => { to_execute = Some(output); },
+                        Err(e) => {
+                            to_execute = None;
+                            eprintln!("{}", e);
+                        },
+                    };
+                }
                 command => {
                     let stdin_child = to_execute
                         .map_or(Stdio::inherit(),
@@ -73,4 +86,5 @@ pub mod shell {
 
         }
     }
+
 }
