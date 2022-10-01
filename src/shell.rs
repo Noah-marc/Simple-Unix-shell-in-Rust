@@ -126,8 +126,7 @@ pub mod shell {
     }
     pub fn create_file(input:&str) {
         let mut index = 0;
-        input.trim();
-        let k:Vec<&str> = input.split(" ").collect();
+        let k:Vec<&str> = input.trim().split(" ").collect();
 
         if k.contains(&">") {
             for i in 0..k.len() {
