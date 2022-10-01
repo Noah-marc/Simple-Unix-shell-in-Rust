@@ -1,9 +1,12 @@
-use std::env;
-use std::io::{stdin, stdout, Write};
-use std::path::Path;
-use std::process::{Child, Command, Stdio};
+pub mod shell {
 
-fn shell() {
+    pub fn shell_run() {
+
+    use std::env;
+    use std::io::{stdin, stdout, Write};
+    use std::path::Path;
+    use std::process::{Child, Command, Stdio};
+
     loop {
         let current_path = env::current_dir().unwrap().to_str().unwrap().to_string();
         print!("{current_path}$", current_path = current_path);
@@ -68,5 +71,6 @@ fn shell() {
             end_command.wait().unwrap();
         }
 
+        }
     }
 }
