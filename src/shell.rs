@@ -45,8 +45,6 @@ pub mod shell {
                         to_execute = None;
                     },
                     "exit" => return,
-                    ">" => {
-                    },
                     command => {
                         let stdin_child = to_execute
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
@@ -90,9 +88,9 @@ pub mod shell {
     }
 
 
-    pub fn user_input_reformat(input: &str) -> String {
+    pub fn user_input_reformat(mut input: &str) -> String {
+        input.trim();
         let mut vector: Vec<&str> = input.split(" ").collect();
-        println!("{:?}", vector);
 
         for i in 0..vector.len() {
             if vector[i] == ">" {
@@ -105,6 +103,17 @@ pub mod shell {
                 vector.insert(i+6," ");
                 vector.insert(i+7, ">/dev/null");
                 break;
+            }
+        }
+        let mut counter = 1;
+        for x in 0..vector.len(){
+            if x == vector.len() {
+                break;
+            } else if vector[x] == " " {}
+            else if vector[x] != " " && vector[x+1] == " " {}
+            else {
+            vector.insert(x+counter," ");
+            counter += 1;
             }
         }
 
