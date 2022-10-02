@@ -33,7 +33,6 @@ pub mod utilities {
                     break;
                 } else if vector[x] == " " {} else if vector[x] != " " && vector[x + 1] == " " {} else {
                     vector.insert(x + counter, " ");
-                    counter += 1;
                 }
             }
 
