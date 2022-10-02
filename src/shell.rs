@@ -80,7 +80,6 @@ pub mod shell {
             }
             if user_input.chars().nth(user_input.len()-1) ==  Some('&') && !user_input.contains(">") {
                 to_execute = None;
-                return;
             }
             else {
                 if let Some(mut end_command) = to_execute {
