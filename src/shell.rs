@@ -45,35 +45,6 @@ pub mod shell {
                         to_execute = None;
                     },
                     "exit" => return,
-                    "tee" => {
-                        let stdin_child = to_execute
-                            .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
-
-                        let stdout_child = if commands.peek().is_some() {
-                            Stdio::piped()
-                        } else {
-                            Stdio::inherit()
-                        };
-
-
-                        let execution = Command::new(command)
-                            .args(args)
-                            .arg(">/dev/null")
-                            .stdin(stdin_child)
-                            .stdout(stdout_child)
-                            .spawn();
-
-
-                        match execution {
-                            Ok(output) => {
-                                to_execute = Some(output);
-                            },
-                            Err(e) => {
-                                to_execute = None;
-                                eprintln!("{}", e);
-                            },
-                        };
-                    },
                     command => {
                         let stdin_child = to_execute
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
@@ -117,7 +88,7 @@ pub mod shell {
     }
 
 
-    pub fn user_input_reformat(mut input: &str) -> String {
+    pub fn user_input_reformat(input: &str) -> String {
         let mut vector: Vec<&str> = input.split(" ").collect();
 
         if vector.contains(&">") {
@@ -129,8 +100,8 @@ pub mod shell {
                     vector.insert(i + 2 as usize, " ");
                     vector.insert(i + 3 as usize, "tee");
                     vector.insert(i + 4, " ");
+                    vector.insert(i + 5, "-a");
                     vector.insert(i + 6, " ");
-                    // vector.insert(i + 7, ">/dev/null");
                     break;
                 }
             }
