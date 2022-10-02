@@ -18,7 +18,7 @@ pub mod shell {
             let mut user_input = String::new();
             stdin().read_line(&mut user_input).unwrap();
 
-            let reformated_input = user_input_reformat(user_input);
+            let reformated_input = user_input_reformat(&user_input);
 
 
             // this needs to be peekable in order to determine when we are on the last command
