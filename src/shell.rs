@@ -84,7 +84,7 @@ pub mod shell {
                     end_command.kill().expect("panic");
                 }
             } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {
-                if let Some(mut end_command) = to_execute {}
+                to_execute = None;
             } else {
                 if let Some(mut end_command) = to_execute {
                     // block till the last command in the input was executed
