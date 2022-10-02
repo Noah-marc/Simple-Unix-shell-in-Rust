@@ -91,33 +91,34 @@ pub mod shell {
     pub fn user_input_reformat(mut input: &str) -> String {
         let mut vector: Vec<&str> = input.split(" ").collect();
 
-        for i in 0..vector.len() {
-            if vector[i] == ">" {
-                vector.remove(i);
-                vector.insert(i, " ");
-                vector.insert(i+1, "|");
-                vector.insert(i + 2 as usize, " ");
-                vector.insert(i+3 as usize,"tee");
-                vector.insert(i+4, " ");
-                vector.insert(i+6," ");
-                vector.insert(i+7, ">/dev/null");
-                break;
+        if vector.contains(&">") {
+            for i in 0..vector.len() {
+                if vector[i] == ">" {
+                    vector.remove(i);
+                    vector.insert(i, " ");
+                    vector.insert(i + 1, "|");
+                    vector.insert(i + 2 as usize, " ");
+                    vector.insert(i + 3 as usize, "tee");
+                    vector.insert(i + 4, " ");
+                    vector.insert(i + 6, " ");
+                    vector.insert(i + 7, ">/dev/null");
+                    break;
+                }
             }
-        }
-        let mut counter = 1;
-        for x in 0..vector.len(){
-            if x == vector.len() {
-                break;
-            } else if vector[x] == " " {}
-            else if vector[x] != " " && vector[x+1] == " " {}
-            else {
-            vector.insert(x+counter," ");
-            counter += 1;
+            let mut counter = 1;
+            for x in 0..vector.len() {
+                if x == vector.len() {
+                    break;
+                } else if vector[x] == " " {} else if vector[x] != " " && vector[x + 1] == " " {} else {
+                    vector.insert(x + counter, " ");
+                    counter += 1;
+                }
             }
+
+            let vector_str: String = vector.into_iter().collect();
+
+            return vector_str;
         }
-
-        let vector_str: String = vector.into_iter().collect();
-
-        return vector_str;
+        return input.to_string();
     }
 }
