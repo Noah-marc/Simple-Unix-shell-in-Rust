@@ -18,8 +18,8 @@ pub mod shell {
             let mut user_input = String::new();
             stdin().read_line(&mut user_input).unwrap();
             user_input.pop();
-            let reformated_input = user_input_reformat(&user_input);
-
+            let mut reformated_input = user_input_reformat(&user_input);
+            reformated_input = reformated_input.chars().into_iter().filter(|&ch| ch != '&').collect();
 
             // this needs to be peekable in order to determine when we are on the last command
             let mut commands = reformated_input.trim().split(" | ").peekable();
@@ -79,8 +79,13 @@ pub mod shell {
                 }
             }
             if user_input.chars().nth(user_input.len()-1) ==  Some('&') && !user_input.contains(">") {
-                to_execute = None;
-            }
+
+                if let Some(mut end_command) = to_execute {
+                    // block till the last command in the input was executed
+                    end_command.kill().expect("panic");
+                }
+
+            } else if user_input.chars().nth(user_input.len()-1) ==  Some('&') && user_input.contains(">") {}
             else {
                 if let Some(mut end_command) = to_execute {
                     // block till the last command in the input was executed
