@@ -16,6 +16,7 @@ pub mod utilities {
         let mut vector: Vec<&str> = input.split(" ").collect();
 
         if vector.contains(&">") {
+
             for i in 0..vector.len() {
                 if vector[i] == ">" {
                     vector.remove(i);
@@ -27,12 +28,11 @@ pub mod utilities {
                     break;
                 }
             }
-            let mut counter = 1;
             for x in 0..vector.len() {
                 if x == vector.len() {
                     break;
                 } else if vector[x] == " " {} else if vector[x] != " " && vector[x + 1] == " " {} else {
-                    vector.insert(x + counter, " ");
+                    vector.insert(x + 1 as usize, " ");
                 }
             }
 
