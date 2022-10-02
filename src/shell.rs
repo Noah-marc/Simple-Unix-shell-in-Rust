@@ -100,8 +100,6 @@ pub mod shell {
                     vector.insert(i + 2 as usize, " ");
                     vector.insert(i + 3 as usize, "tee");
                     vector.insert(i + 4, " ");
-                    vector.insert(i + 5, "-a");
-                    vector.insert(i + 6, " ");
                     break;
                 }
             }
