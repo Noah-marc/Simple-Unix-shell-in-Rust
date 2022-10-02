@@ -1,11 +1,9 @@
 extern crate core;
 
-use crate::shell::shell::shell_run;
+use crate::shell::shell::*;
 
 mod shell;
-
-// TODO: Writing to files does not work we have to fix it
-// TODO: Pipes are also not working well, sometimes they work and sometimes not. Have to investigate more.
+mod utilities;
 
 fn main(){
     shell_run();

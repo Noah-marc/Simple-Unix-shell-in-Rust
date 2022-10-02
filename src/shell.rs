@@ -1,53 +1,96 @@
 pub mod shell {
+    // Functions form other files
+    use crate::utilities::utilities::*;
+
+    // Rust libraries
     use std::env;
     use std::io::{stdin, stdout, Write};
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
-    use std::fs::File;
-
-    // do the pre=processing of the input, if > this is detected create a file
-    // then delete this from user input
-    // create a vector to keep which commands use this symbol
 
     pub fn shell_run() {
         loop {
+            // At the beginning of each shell iteration, we firstly retrieve a current directory
+            // we are working in.
+
             let current_path = env::current_dir().unwrap().to_str().unwrap().to_string();
             print!("{current_path}$", current_path = current_path);
+
+            // this is flushed in order to make sure that the current path is printed before user input,
+            // therefore ensuring that the input command will be executed on the same line as
+            // the current directory was printed
             stdout().flush().unwrap();
 
+            // Here we take in user input from the console.
             let mut user_input = String::new();
             stdin().read_line(&mut user_input).unwrap();
+
+            // .pop() function is used on the input to delete /n character at the end
             user_input.pop();
+
+            //Here a helper function user_input_reformat is used in order to adjust the user
+            // input in such a way that we can process it. (more information in the file utilities.rs)
             let mut reformated_input = user_input_reformat(&user_input);
+
+            //Here we use "streams" to remove '&' character (the division of tasks based
+            // on the '&' is processed based on the initial user input) in order to process
+            // the commands correctly. TODO check if it is fine
             reformated_input = reformated_input.chars().into_iter().filter(|&ch| ch != '&').collect();
 
-            // this needs to be peekable in order to determine when we are on the last command
+            // Here we split commands based on pipes, this way we get a vector of commands and
+            // their arguments. This vector is peekable() meaning the it is possible to check the
+            // next value without advancing the iterator (this is done by the .peek() function)
             let mut commands = reformated_input.trim().split(" | ").peekable();
-            let mut to_execute = None;
 
+            // This variable will be used to store an ongoing child process. Later from this
+            // variable the output of the command will be striped and assigned as an
+            // input for the next command. (This is done to handel pipes)
+            let mut input_for_next_child = None;
 
+            // At this line the main while which handles command execution begins
+            // The condition says that as long as it is possible to get a next command
+            // from 'commands' and unpack it 'command' the loop will keep on repeating
             while let Some(command) = commands.next() {
 
-                // everything after the first whitespace character is interpreted as args to the command
+                // Here we divided the element taken from 'commands' based on whitespaces
+                // we made is so that everything after the first whitespace is
+                // interpreted as arguments for the command
                 let mut parts = command.trim().split_whitespace();
                 let command = parts.next().unwrap();
                 let args = parts;
 
-
+                // Here we have a pattern-matching block allowing us to handel commands
+                // in the specific way to execute them correctly
                 match command {
                     "cd" => {
-                        // default to '/' as new directory if one was not provided
+                        // The cd command goes to '/' directory if no directory is
+                        // provided
                         let new_directory = args.peekable().peek().map_or("/", |x| *x);
                         let dir = Path::new(new_directory);
                         if let Err(e) = env::set_current_dir(&dir) {
                             eprintln!("{}", e);
                         }
-                        to_execute = None;
+                        // This variable is evaluated here to None to make
+                        input_for_next_child = None;
                     },
+
+                    // Here we handel the 'exit' keyword which terminates the program.
                     "exit" => return,
+
+                    // Here is the part of the block which handles all other commands
                     command => {
-                        let stdin_child = to_execute
+                        // Here we take the earlier mentioned variable input_for_next_child and we strip the output
+                        // of the previous command from it to use it as an 'stdin' for the
+                        // next command in case of pipes. But if there is no pipe, and there is no
+                        // output from previous command the 'stdin' is inherited after corresponding
+                        // parent descriptor.
+                        let stdin_child = input_for_next_child
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
+
+                        // In case of 'stdout' the same rule applies. If there is another command
+                        // to which the output will have to be redirected we create a pipe
+                        // in order to connect the parent and child process. If there is no
+                        // next command the 'stdout' is inherited after the parent descriptor.
 
                         let stdout_child = if commands.peek().is_some() {
                             Stdio::piped()
@@ -55,75 +98,55 @@ pub mod shell {
                             Stdio::inherit()
                         };
 
-
+                        // Here we executed the command. We spawn this command as a child.
                         let execution = Command::new(command)
                             .args(args)
                             .stdin(stdin_child)
                             .stdout(stdout_child)
                             .spawn();
 
-
+                        // Then if the execution of the command was successful we assign it
+                        // to the 'input_for_the_next_child' variable, in order to later (see above) get the output of
+                        // this command, if the process was piped.
+                        // If the execution failed we print an error.
                         match execution {
                             Ok(output) => {
-                                to_execute = Some(output);
+                                input_for_next_child = Some(output);
                             },
                             Err(e) => {
-                                to_execute = None;
+                                input_for_next_child = None;
                                 eprintln!("{}", e);
                             },
                         };
                     }
-
-
-                    // this assigns a command along with all necessary arguments to the child process
                 }
             }
+            // Here we handel how the loop should proceed based on the user input, specifically
+            // the '&' symbol.
+
+            //If user wrote the '&' symbol at the end of the command and no file redirection was provided then the 'child'
+            // is killed.
             if user_input.chars().nth(user_input.len() - 1) == Some('&') && !user_input.contains(">") {
-                if let Some(mut end_command) = to_execute {
-                    // block till the last command in the input was executed
+                if let Some(mut end_command) = input_for_next_child {
+
                     end_command.kill().expect("panic");
                 }
-            } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {
-                to_execute = None;
-            } else {
-                if let Some(mut end_command) = to_execute {
-                    // block till the last command in the input was executed
+
+                //In this case if user wrote '&' symbol at the end of the command and file redirection
+                // is provided the shell gets respawned immediately (we do not wait for the child processes).
+            } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {}
+
+            // In any other case we proceed with normal command execution, where we wait for
+            // all of the commands to finish and then respawn the shell
+            else {
+                if let Some(mut end_command) = input_for_next_child {
+
+                    // This command ensures that all commands given in the user input,
+                    // were executed, before the we go back to the beginning of the
+                    // infinite loop.
                     end_command.wait().unwrap();
                 }
             }
-        }
-
-
-        pub fn user_input_reformat(input: &str) -> String {
-            let mut vector: Vec<&str> = input.split(" ").collect();
-
-            if vector.contains(&">") {
-                for i in 0..vector.len() {
-                    if vector[i] == ">" {
-                        vector.remove(i);
-                        vector.insert(i, " ");
-                        vector.insert(i + 1, "|");
-                        vector.insert(i + 2 as usize, " ");
-                        vector.insert(i + 3 as usize, "tee");
-                        vector.insert(i + 4, " ");
-                        break;
-                    }
-                }
-                let mut counter = 1;
-                for x in 0..vector.len() {
-                    if x == vector.len() {
-                        break;
-                    } else if vector[x] == " " {} else if vector[x] != " " && vector[x + 1] == " " {} else {
-                        vector.insert(x + counter, " ");
-                        counter += 1;
-                    }
-                }
-
-                let vector_str: String = vector.into_iter().collect();
-
-                return vector_str;
-            }
-            return input.to_string();
         }
     }
 }
