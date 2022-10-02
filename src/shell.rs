@@ -78,10 +78,15 @@ pub mod shell {
                     // this assigns a command along with all necessary arguments to the child process
                 }
             }
-
-            if let Some(mut end_command) = to_execute {
-                // block till the last command in the input was executed
-                end_command.wait().unwrap();
+            if user_input.chars().nth(user_input.len()-1) ==  Some('&') && !user_input.contains(">") {
+                to_execute = None;
+                return;
+            }
+            else {
+                if let Some(mut end_command) = to_execute {
+                    // block till the last command in the input was executed
+                    end_command.wait().unwrap();
+                }
             }
         }
 
