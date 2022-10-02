@@ -1,11 +1,9 @@
 pub mod shell {
     use std::env;
-    use std::io::{stdin, Stdin, stdout, Write};
+    use std::io::{stdin, stdout, Write};
     use std::path::Path;
     use std::process::{Child, Command, Stdio};
     use std::fs::File;
-    use std::ops::Deref;
-    use std::ptr::write;
 
     // do the pre=processing of the input, if > this is detected create a file
     // then delete this from user input
@@ -47,6 +45,34 @@ pub mod shell {
                         to_execute = None;
                     },
                     "exit" => return,
+                    ">" => {
+                        let stdin_child = to_execute
+                            .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
+
+                        let stdout_child = if commands.peek().is_some() {
+                            Stdio::piped()
+                        } else {
+                            Stdio::inherit()
+                        };
+
+
+                        let execution = Command::new(command)
+                            .args(args)
+                            .stdin(stdin_child)
+                            .stdout(stdout_child)
+                            .spawn();
+
+
+                        match execution {
+                            Ok(output) => {
+                                to_execute = Some(output);
+                            },
+                            Err(e) => {
+                                to_execute = None;
+                                eprintln!("{}", e);
+                            },
+                        };
+                    },
                     command => {
                         let stdin_child = to_execute
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
