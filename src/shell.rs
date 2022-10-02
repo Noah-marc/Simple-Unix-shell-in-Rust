@@ -52,12 +52,15 @@ pub mod shell {
             // from 'commands' and unpack it 'command' the loop will keep on repeating
             while let Some(command) = commands.next() {
 
+                if command.to_string().is_empty(){
+                    break;
+                }
                 // Here we divided the element taken from 'commands' based on whitespaces
                 // we made is so that everything after the first whitespace is
                 // interpreted as arguments for the command
-                let mut parts = command.trim().split_whitespace();
-                let command = parts.next().unwrap();
-                let args = parts;
+                let mut elements_command = command.trim().split_whitespace();
+                let command = elements_command.next().unwrap();
+                let args = elements_command;
 
                 // Here we have a pattern-matching block allowing us to handel commands
                 // in the specific way to execute them correctly
@@ -84,7 +87,7 @@ pub mod shell {
                         // next command in case of pipes. But if there is no pipe, and there is no
                         // output from previous command the 'stdin' is inherited after corresponding
                         // parent descriptor.
-                        let stdin_child = input_for_next_child
+                        let new_stdin = input_for_next_child
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
 
                         // In case of 'stdout' the same rule applies. If there is another command
@@ -92,7 +95,7 @@ pub mod shell {
                         // in order to connect the parent and child process. If there is no
                         // next command the 'stdout' is inherited after the parent descriptor.
 
-                        let stdout_child = if commands.peek().is_some() {
+                        let new_stdout = if commands.peek().is_some() {
                             Stdio::piped()
                         } else {
                             Stdio::inherit()
@@ -101,8 +104,8 @@ pub mod shell {
                         // Here we executed the command. We spawn this command as a child.
                         let execution = Command::new(command)
                             .args(args)
-                            .stdin(stdin_child)
-                            .stdout(stdout_child)
+                            .stdin(new_stdin)
+                            .stdout(new_stdout)
                             .spawn();
 
                         // Then if the execution of the command was successful we assign it
@@ -126,27 +129,30 @@ pub mod shell {
 
             //If user wrote the '&' symbol at the end of the command and no file redirection was provided then the 'child'
             // is killed.
-            if user_input.chars().nth(user_input.len() - 1) == Some('&') && !user_input.contains(">") {
-                if let Some(mut end_command) = input_for_next_child {
+            // This action is only performed when user input is not empty
+            if !user_input.is_empty() {
 
-                    end_command.kill().expect("panic");
+                if user_input.chars().nth(user_input.len() - 1) == Some('&') && !user_input.contains(">") {
+                    if let Some(mut end_command) = input_for_next_child {
+                        end_command.kill().expect("panic");
+                    }
+
+                    //In this case if user wrote '&' symbol at the end of the command and file redirection
+                    // is provided the shell gets respawned immediately (we do not wait for the child processes).
+                } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {
+                    input_for_next_child = None;
                 }
 
-                //In this case if user wrote '&' symbol at the end of the command and file redirection
-                // is provided the shell gets respawned immediately (we do not wait for the child processes).
-            } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {
-                input_for_next_child = None;
-            }
+                // In any other case we proceed with normal command execution, where we wait for
+                // all of the commands to finish and then respawn the shell
+                else {
+                    if let Some(mut end_command) = input_for_next_child {
 
-            // In any other case we proceed with normal command execution, where we wait for
-            // all of the commands to finish and then respawn the shell
-            else {
-                if let Some(mut end_command) = input_for_next_child {
-
-                    // This command ensures that all commands given in the user input,
-                    // were executed, before the we go back to the beginning of the
-                    // infinite loop.
-                    end_command.wait().unwrap();
+                        // This command ensures that all commands given in the user input,
+                        // were executed, before the we go back to the beginning of the
+                        // infinite loop.
+                        end_command.wait().unwrap();
+                    }
                 }
             }
         }
