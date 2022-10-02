@@ -90,17 +90,20 @@ pub mod shell {
     }
 
 
-    pub fn user_input_reformat(input: String) -> String {
-        let mut vector: Vec<char> = Vec::new();
-
-        for x in 0..input.len() {
-            vector.push(input.chars().nth(x).unwrap());
-        }
+    pub fn user_input_reformat(input: &str) -> String {
+        let mut vector: Vec<&str> = input.split(" ").collect();
+        println!("{:?}", vector);
 
         for i in 0..vector.len() {
-            if vector[i] == '>' {
-                vector.insert(i, '|');
-                vector.insert(i + 1 as usize, ' ');
+            if vector[i] == ">" {
+                vector.remove(i);
+                vector.insert(i, " ");
+                vector.insert(i+1, "|");
+                vector.insert(i + 2 as usize, " ");
+                vector.insert(i+3 as usize,"tee");
+                vector.insert(i+4, " ");
+                vector.insert(i+6," ");
+                vector.insert(i+7, ">/dev/null");
                 break;
             }
         }
