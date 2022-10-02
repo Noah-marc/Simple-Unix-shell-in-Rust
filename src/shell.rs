@@ -17,7 +17,7 @@ pub mod shell {
 
             let mut user_input = String::new();
             stdin().read_line(&mut user_input).unwrap();
-
+            user_input.pop();
             let reformated_input = user_input_reformat(&user_input);
 
 
@@ -89,7 +89,6 @@ pub mod shell {
 
 
     pub fn user_input_reformat(mut input: &str) -> String {
-        input.trim();
         let mut vector: Vec<&str> = input.split(" ").collect();
 
         for i in 0..vector.len() {
