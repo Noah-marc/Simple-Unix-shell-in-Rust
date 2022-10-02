@@ -132,16 +132,7 @@ pub mod shell {
             // This action is only performed when user input is not empty
             if !user_input.is_empty() {
 
-                if user_input.chars().nth(user_input.len() - 1) == Some('&') && !user_input.contains(">") {
-                    if let Some(mut end_command) = input_for_next_child {
-                        end_command.kill().expect("panic");
-                    }
-
-                    //In this case if user wrote '&' symbol at the end of the command and file redirection
-                    // is provided the shell gets respawned immediately (we do not wait for the child processes).
-                } else if user_input.chars().nth(user_input.len() - 1) == Some('&') && user_input.contains(">") {
-                    input_for_next_child = None;
-                }
+                 if user_input.chars().nth(user_input.len() - 1) == Some('&') {}
 
                 // In any other case we proceed with normal command execution, where we wait for
                 // all of the commands to finish and then respawn the shell
