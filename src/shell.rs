@@ -1,5 +1,4 @@
 pub mod shell {
-    // Functions form other files
     use crate::utilities::utilities::*;
 
     // Rust libraries
@@ -10,15 +9,13 @@ pub mod shell {
 
     pub fn shell_run() {
         loop {
-            // At the beginning of each shell iteration, we firstly retrieve a current directory
-            // we are working in.
+            // At the beginning of each shell iteration, we first retrieve the current directory we are working in
 
             let current_path = env::current_dir().unwrap().to_str().unwrap().to_string();
             print!("{current_path}$", current_path = current_path);
 
-            // this is flushed in order to make sure that the current path is printed before user input,
-            // therefore ensuring that the input command will be executed on the same line as
-            // the current directory was printed
+            // this is flushed in order to make sure that the current path is printed before user input, which ensures that
+            //  the input command will be executed on the same line as the current directory was printed
             stdout().flush().unwrap();
 
             // Here we take in user input from the console.
@@ -32,14 +29,12 @@ pub mod shell {
             // input in such a way that we can process it. (more information in the file utilities.rs)
             let mut reformated_input = user_input_reformat(&user_input);
 
-            //Here we use "streams" to remove '&' character (the division of tasks based
-            // on the '&' is processed based on the initial user input) in order to process
-            // the commands correctly. TODO check if it is fine
+            //Here we use "streams" to remove '&' character (the division of tasks based on the '&' is processed based on the initial user input)
+            //  in order to process the commands correctly
             reformated_input = reformated_input.chars().into_iter().filter(|&ch| ch != '&').collect();
 
-            // Here we split commands based on pipes, this way we get a vector of commands and
-            // their arguments. This vector is peekable() meaning the it is possible to check the
-            // next value without advancing the iterator (this is done by the .peek() function)
+            // Here we split commands based on pipes and  get a vector of commands and their arguments. This vector is peekable(),
+            // meaning the it is possible to check the next value without advancing the iterator (this is done by the .peek() function)
             let mut commands = reformated_input.trim().split(" | ").peekable();
 
             // This variable will be used to store an ongoing child process. Later from this
@@ -56,48 +51,42 @@ pub mod shell {
                     break;
                 }
                 // Here we divided the element taken from 'commands' based on whitespaces
-                // we made is so that everything after the first whitespace is
-                // interpreted as arguments for the command
+                // We interpet everything after the first whitespace as arguments for the command
+                
                 let mut elements_command = command.trim().split_whitespace();
                 let command = elements_command.next().unwrap();
                 let args = elements_command;
 
-                // Here we have a pattern-matching block allowing us to handel commands
-                // in the specific way to execute them correctly
+                // Here we have a pattern-matching block allowing us to handel commands in the specific way for correct execution
                 match command {
                     "cd" => {
-                        // The cd command goes to '/' directory if no directory is
-                        // provided
+                        // The cd command goes to '/' directory if no directory is provided
                         let new_directory = args.peekable().peek().map_or("/", |x| *x);
                         let dir = Path::new(new_directory);
                         if let Err(e) = env::set_current_dir(&dir) {
                             eprintln!("{}", e);
                         }
-                        // This variable is evaluated here to None to make
                         input_for_next_child = None;
                     },
 
-                    // Here we handel the 'exit' keyword which terminates the program.
+                    // When exit is provided the program shal terminate
                     "exit" => return,
 
                     // Here is the part of the block which handles all other commands
                     command => {
-                        // Here we take the earlier mentioned variable input_for_next_child and we strip the output
-                        // of the previous command from it to use it as an 'stdin' for the
-                        // next command in case of pipes. But if there is no pipe, and there is no
-                        // output from previous command the 'stdin' is inherited after corresponding
-                        // parent descriptor.
+                        // Here we take the earlier mentioned variable input_for_next_child and we strip the output of the previous command from it
+                        // to use it as an 'stdin' for the next command in case of pipes.
+                        // But if there is no pipe, and there is no output from previous command, the 'stdin' is inherited after the corresponding
+                        // parent descriptor.  
                         let new_stdin = input_for_next_child
                             .map_or(Stdio::inherit(), |output: Child| Stdio::from(output.stdout.unwrap()));
 
-                        // In case of 'stdout' the same rule applies. If there is another command
-                        // to which the output will have to be redirected we create a pipe
-                        // in order to connect the parent and child process. If there is no
-                        // next command the 'stdout' is inherited after the parent descriptor.
-
+                        // In case of 'stdout' the same rule applies. If there is another command to which the output will have to be redirected,
+                        // we create a pipe in order to connect the parent and child process.
                         let new_stdout = if commands.peek().is_some() {
                             Stdio::piped()
                         } else {
+                            // If there is no next command the 'stdout' is inherited after the parent descriptor. 
                             Stdio::inherit()
                         };
 
@@ -108,14 +97,13 @@ pub mod shell {
                             .stdout(new_stdout)
                             .spawn();
 
-                        // Then if the execution of the command was successful we assign it
-                        // to the 'input_for_the_next_child' variable, in order to later (see above) get the output of
-                        // this command, if the process was piped.
-                        // If the execution failed we print an error.
+                        // Then if the execution of the command was successful we assign it to the 'input_for_the_next_child' variable, in order to later 
+                        //(cf. above) get the output of this command, in case that the process was piped
                         match execution {
                             Ok(output) => {
                                 input_for_next_child = Some(output);
                             },
+                            // If the execution failed we print an error.
                             Err(e) => {
                                 input_for_next_child = None;
                                 eprintln!("{}", e);
@@ -124,23 +112,17 @@ pub mod shell {
                     }
                 }
             }
-            // Here we handel how the loop should proceed based on the user input, specifically
-            // the '&' symbol.
+            // Here we handel how the loop should proceed based on the user input, specifically the '&' symbol.
 
             //If user wrote the '&' symbol at the end of the command and no file redirection was provided then the 'child'
             // is killed.
-            // This action is only performed when user input is not empty
             if !user_input.is_empty() {
-
                  if user_input.chars().nth(user_input.len() - 1) == Some('&') {}
 
-                // In any other case we proceed with normal command execution, where we wait for
-                // all of the commands to finish and then respawn the shell
+                // In any other case we proceed with normal command execution, where we wait for all of the commands to finish and then respawn the shell
                 else {
                     if let Some(mut end_command) = input_for_next_child {
-
-                        // This command ensures that all commands given in the user input,
-                        // were executed, before the we go back to the beginning of the
+                        // This command ensures that all commands provided by the user input, were executed, before the we go back to the beginning of the
                         // infinite loop.
                         end_command.wait().unwrap();
                     }

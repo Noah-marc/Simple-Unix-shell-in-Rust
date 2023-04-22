@@ -1,17 +1,14 @@
 pub mod utilities {
+    // This class was initially created to handle file creation.
+    // Unfortunately, due to ownership problems (Rust ownership) we could not get the standard file writing to work 
+    //(by standard we mean for example: write! macro or File.write_all(), etc.) 
+    // We could not figure out how to get the output of previous command such as 'echo' without breaking the ownership constraint (main problem: stdin_child)
+    // Therefore in order to at least provide some implementation of file creation and writing to them we settled to use the 'tee' command
 
-    // This function was initially created to handle file creation.
-    // Unfortunately, due to ownership problems (Rust ownership)
-    // we could not get the standard file writing to work (by standard we mean
-    // for example: write! macro or File.write_all(), etc.) We could not figure out how to get
-    // the output of previous command such as 'echo' without breaking the ownership
-    // constraint (main problem: stdin_child). Therefore in order to at least provide some
-    // implementation of file creation and writing to them we settled to use the 'tee' command
 
-    // This function's job is to find all occurrences of '>' and replace them with:
-    // '| tee [filename]'. We do it by inserting elements into a string. As you can notice
-    // this done with the help of pipes. This solution has one drawback. We could not find
-    // the way to mute the output of the command writing to the file.
+
+    // This function's job is to find all occurrences of '>' and replace them with: '| tee [filename]'. 
+    //This solution has one drawback. We could not find the way to mute the output of the command writing to the file.
     pub fn user_input_reformat(input: &str) -> String {
         let mut vector: Vec<&str> = input.split(" ").collect();
 
